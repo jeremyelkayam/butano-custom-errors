@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2020-2025 Gustavo Valiente gustavo.valiente@protonmail.com
  * zlib License, see LICENSE file.
+ * 
+ * Modified by Jeremy Elkayam 11/11/2025 for MIVS demo
  */
 
 #include "../include/bn_hw_show.h"
@@ -34,7 +36,7 @@ namespace
     #if BN_CFG_ASSERT_ENABLED || BN_CFG_PROFILER_ENABLED
         constexpr color light_red(31, 7, 7);
         constexpr color light_blue(10, 10, 31);
-        constexpr int tte_margin = 12;
+        constexpr int tte_margin = 8;
 
         void init_tte(const system_font& system_font)
         {
@@ -53,10 +55,72 @@ namespace
     void error(const system_font& system_font, const string_view& condition, const string_view& file_name,
                const string_view& function, int line, const string_view& message, const string_view& tag)
     {
+
+
         string<BN_CFG_ASSERT_BUFFER_SIZE> buffer;
         init_tte(system_font);
 
+        //TODO - this is very wasteful.
+        // best way would be to use 12 int64s
+        // and go thru bit by bit.
+        uint32_t qr_bits[27][27] = 
+{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+{ 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
+{ 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0 },
+{ 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0 },
+{ 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0 },
+{ 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0 },
+{ 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0 },
+{ 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
+{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+{ 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0 },
+{ 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0 },
+{ 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0 },
+{ 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0 },
+{ 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0 },
+{ 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0 },
+{ 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0 },
+{ 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0 },
+{ 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0 },
+{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0 },
+{ 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0 },
+{ 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0 },
+{ 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 },
+{ 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0 },
+{ 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0 },
+{ 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0 },
+{ 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0 },
+{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
+
+        uint32_t scale = 3;
+        uint32_t startx = 240 - 28*scale;
+        uint32_t starty = scale;
+        for(uint32_t z = 0; z < 27; ++z)
+        {
+            for(uint32_t g = 0; g < 27; ++g)
+            {
+                int color = (qr_bits[z][g] == 0) ? 
+                    colors::white.data() : 
+                    colors::black.data();
+                for(uint32_t x = 0; x < scale; ++x)
+                {
+                    for(uint32_t y = 0; y < scale; ++y)
+                    {
+                        m3_plot( startx + z*scale + x,  
+                            starty + g*scale + y, color);
+                    }
+                }
+            }
+        }
+
+
+
+        tte_set_margins(tte_margin, tte_margin, 
+            startx - scale, display::height() - tte_margin);
+
         // Show file name:
+        tte_set_ink(colors::white.data());
+        tte_write("Globlins has crashed!!\n");
         tte_set_ink(light_red.data());
         tte_write("ERROR in ");
 
@@ -108,6 +172,18 @@ namespace
         buffer.append(message.begin(), message.end());
         tte_set_ink(colors::white.data());
         tte_write(buffer.c_str());
+
+
+        tte_set_margins(tte_margin, tte_margin, display::width() - tte_margin, display::height() - tte_margin);
+
+
+        // Show MIVS-specific error message:
+        const char* demo_reset_msg = "Please make a crash report using the QR code (or go to tinyurl.com/globcrash), then notify a MIVS volunteer that the Globlins! demo crashed.";
+        POINT16 demo_reset_size = tte_get_text_size(demo_reset_msg);
+        tte_set_pos(tte_margin, display::height() - (tte_margin * 2 + 2) - demo_reset_size.y);
+        tte_set_ink(colors::lime.data());
+        tte_write(demo_reset_msg);
+
 
         // Show stacktrace warning:
         #ifdef BN_STACKTRACE
